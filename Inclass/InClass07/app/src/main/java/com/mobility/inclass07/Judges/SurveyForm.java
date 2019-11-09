@@ -77,7 +77,7 @@ public class SurveyForm extends Fragment {
         }
     }
 
-    @Override   
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
     }

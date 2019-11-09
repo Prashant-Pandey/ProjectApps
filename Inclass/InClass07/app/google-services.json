@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1022172171922",
+    "firebase_url": "https://school-vote-364e6.firebaseio.com",
+    "project_id": "school-vote-364e6",
+    "storage_bucket": "school-vote-364e6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022172171922:android:2d69b5b1efe670cec2a04b",
+        "android_client_info": {
+          "package_name": "com.mobility.inclass07"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1022172171922-3iq2hu957uiviromm7nvucupd446mons.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobility.inclass07",
+            "certificate_hash": "b5bff38a528f243d1809f427cc5715a110466a82"
+          }
+        },
+        {
+          "client_id": "1022172171922-hee6fcl6bo70e2k91qc5i4jph8uhf465.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHzhxG1lBhXwcQNb25vBctGN-Y_BgioUs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1022172171922-hee6fcl6bo70e2k91qc5i4jph8uhf465.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

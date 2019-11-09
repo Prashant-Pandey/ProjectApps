@@ -8,10 +8,12 @@
         android:id="@+id/authFragment"
         android:name="com.mobility.inclass07.AuthDirectory.AuthFragment"
         android:label="fragment_auth"
-        tools:layout="@layout/fragment_auth" >
+        tools:layout="@layout/fragment_auth">
         <action
             android:id="@+id/action_authFragment_to_surveyForm"
-            app:destination="@id/surveyForm" />
+            app:destination="@id/surveyForm"
+            app:popUpToInclusive="true"
+            app:popUpTo="@id/authFragment"/>
     </fragment>
     <fragment
         android:id="@+id/surveyForm"

@@ -1,8 +1,13 @@
 package com.mobility.inclass07.AuthDirectory;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.inputmethodservice.Keyboard;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +31,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.ActionCodeSettings;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
@@ -44,6 +51,11 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
     EditText emailET;
     TextView loginMessage;
     String email, TAG = this.getClass().getSimpleName();
+    int CAMERA_REQUEST_CODE = 23;
+    Activity activity;
+    String[] cameraPermission = new String[]{Manifest.permission.CAMERA};
+    SharedPreferences sharedPreferences;
+    FirebaseAuth auth;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -74,15 +86,21 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FirebaseApp.initializeApp(activity);
+        auth = FirebaseAuth.getInstance();
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        activity = getActivity();
+        assert activity != null;
+        sharedPreferences = getActivity().getSharedPreferences(getString(R.string.login_email_shared_preference), Context.MODE_PRIVATE);
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_auth, container, false);
     }
@@ -92,12 +110,24 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         navController = Navigation.findNavController(view);
+
+        if (auth.getCurrentUser()!=null){
+            goToNextActivity();
+        }
+
+
         view.findViewById(R.id.login).setOnClickListener(this);
+        view.findViewById(R.id.bypassLogin).setOnClickListener(this);
         emailET = view.findViewById(R.id.email);
         loginMessage = view.findViewById(R.id.loginMessage);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (getActivity().checkSelfPermission(cameraPermission[0])!= PackageManager.PERMISSION_GRANTED){
+                activity.requestPermissions(cameraPermission, CAMERA_REQUEST_CODE);
+            }
+        }
+
         if (getActivity().getIntent()!=null){
-            FirebaseApp.initializeApp(Objects.requireNonNull(getActivity()));
             FirebaseDynamicLinks.getInstance()
                     .getDynamicLink(getActivity().getIntent())
                     .addOnSuccessListener(getActivity(), new OnSuccessListener<PendingDynamicLinkData>() {
@@ -107,8 +137,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
                             Uri deepLink = null;
                             if (pendingDynamicLinkData != null) {
                                 deepLink = pendingDynamicLinkData.getLink();
-                                Log.d(TAG, "onSuccess: "+deepLink);
-                                navController.navigate(R.id.action_authFragment_to_surveyForm);
+
+                                completeLogin(deepLink+"");
                             }
 
 
@@ -118,6 +148,28 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             Log.w(TAG, "getDynamicLink:onFailure", e);
+                        }
+                    });
+        }
+    }
+
+    void completeLogin(String emailLink){
+        // Confirm the link is a sign-in with email link.
+        Log.d(TAG, "onSuccess: "+emailLink);
+        if (auth.isSignInWithEmailLink(emailLink)) {
+            // Retrieve this from wherever you stored it
+            email = sharedPreferences.getString(getString(R.string.login_email), "");
+            // The client SDK will parse the code from the link for you.
+            auth.signInWithEmailLink(email, emailLink)
+                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                Log.d(TAG, "Successfully signed in with email link!");
+                                goToNextActivity();
+                            } else {
+                                Log.e(TAG, "Error signing in with email link", task.getException());
+                            }
                         }
                     });
         }
@@ -135,7 +187,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
     }
 
     @Override
-    public void onClick(View v) {
+    public void onClick(final View v) {
         switch (v.getId()){
             case R.id.login:{
                 email = emailET.getText().toString();
@@ -148,7 +200,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
                                     .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
                                     .setAndroidPackageName("com.mobility.inclass07",true,"19").build();
 
-                    FirebaseAuth auth = FirebaseAuth.getInstance();
                     auth.sendSignInLinkToEmail(email, actionCodeSettings)
                             .addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
@@ -156,20 +207,50 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
                                     if (task.isSuccessful()) {
                                         // email is sent
                                         Log.d(TAG, "Email sent.");
+                                        // TODO: set email in shared preference
+                                        sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
                                         // change the system state to processing
                                         loginMessage.setText(R.string.check_email_instruction);
                                         // disable all inputs
                                         // keyboard down
+                                        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                        assert inputMethodManager != null;
+                                        inputMethodManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
                                     }
 
                                     Log.d(TAG, ""+task.getException());
                                 }
                             });
-//                    navController.navigate(R.id.action_authFragment_to_surveyForm);
                 }
                 break;
             }
+            case R.id.bypassLogin:{
+                goToNextActivity();
+                break;
+            }
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode==CAMERA_REQUEST_CODE&&grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+        }else{
+            Toast.makeText(getContext(), "You've not granted permissions", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    void goToNextActivity(){
+        navController.navigate(R.id.action_authFragment_to_surveyForm);
+    }
+
+    void systemStateLoading(){
+
+    }
+
+    void systemStateLoaded(){
+
     }
 
 }

@@ -19,5 +19,9 @@
         android:id="@+id/surveyForm"
         android:name="com.mobility.inclass07.Judges.SurveyForm"
         android:label="fragment_survey_form"
-        tools:layout="@layout/fragment_survey_form" />
+        tools:layout="@layout/fragment_survey_form" >
+        <action
+            android:id="@+id/action_surveyForm_to_authFragment"
+            app:destination="@id/authFragment" />
+    </fragment>
 </navigation>

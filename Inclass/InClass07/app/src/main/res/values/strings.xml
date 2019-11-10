@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">InClass07</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="auth_failed">Please input valid email</string>
+    <string name="check_email_instruction">Please check your mail to login to application</string>
+    <string name="login_instruction">Please enter your registered email to login into the system</string>
+    <string name="random_email_placeholder">annonymous@email.com</string>
+    <string name="login_email_shared_preference">EMAIL</string>
+    <string name="login_email">email</string>
+    <string name="logout">Logout</string>
+
 </resources>

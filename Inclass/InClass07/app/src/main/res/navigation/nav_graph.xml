@@ -6,22 +6,19 @@
     app:startDestination="@id/authFragment">
     <fragment
         android:id="@+id/authFragment"
-        android:name="com.mobility.inclass07.AuthDirectory.AuthFragment"
+        android:name="com.mobility.inclass07.fragment.AuthFragment"
         android:label="fragment_auth"
         tools:layout="@layout/fragment_auth">
         <action
-            android:id="@+id/action_authFragment_to_surveyForm"
-            app:destination="@id/surveyForm"
+            android:id="@+id/action_authFragment_to_teamListFragment"
+            app:destination="@id/teamList"
             app:popUpToInclusive="true"
             app:popUpTo="@id/authFragment"/>
     </fragment>
     <fragment
-        android:id="@+id/surveyForm"
-        android:name="com.mobility.inclass07.Judges.SurveyForm"
-        android:label="fragment_survey_form"
-        tools:layout="@layout/fragment_survey_form" >
-        <action
-            android:id="@+id/action_surveyForm_to_authFragment"
-            app:destination="@id/authFragment" />
+        android:id="@+id/teamList"
+        android:name="com.mobility.inclass07.fragment.TeamListFragment"
+        android:label="fragment_team_list"
+        tools:layout="@layout/fragment_team_list" >
     </fragment>
 </navigation>

@@ -1,4 +1,4 @@
-package com.mobility.inclass07.Judges;
+package com.mobility.inclass07.fragment;
 
 import android.Manifest;
 import android.app.Activity;
@@ -22,7 +22,6 @@ import android.widget.Toast;
 import com.budiyev.android.codescanner.CodeScanner;
 import com.budiyev.android.codescanner.CodeScannerView;
 import com.budiyev.android.codescanner.DecodeCallback;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.zxing.Result;
 import com.mobility.inclass07.R;

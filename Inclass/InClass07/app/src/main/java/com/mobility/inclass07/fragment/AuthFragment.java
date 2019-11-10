@@ -1,11 +1,10 @@
-package com.mobility.inclass07.AuthDirectory;
+package com.mobility.inclass07.fragment;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.inputmethodservice.Keyboard;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,6 +20,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,10 +37,8 @@ import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.mobility.inclass07.R;
 
-import java.util.Objects;
 
-
-public class AuthFragment extends Fragment implements View.OnClickListener{
+public class AuthFragment extends Fragment implements View.OnClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -49,13 +47,16 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
 
     NavController navController;
     EditText emailET;
-    TextView loginMessage;
-    String email, TAG = this.getClass().getSimpleName();
+    EditText passwordET;
+    TextView passwordTV;
+    String email, password, TAG = this.getClass().getSimpleName();
+    Button toggleLogin;
     int CAMERA_REQUEST_CODE = 23;
     Activity activity;
     String[] cameraPermission = new String[]{Manifest.permission.CAMERA};
     SharedPreferences sharedPreferences;
     FirebaseAuth auth;
+    boolean loginEmailOnly = false;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -111,23 +112,25 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
         super.onViewCreated(view, savedInstanceState);
         navController = Navigation.findNavController(view);
 
-        if (auth.getCurrentUser()!=null){
+        if (auth.getCurrentUser() != null) {
             goToNextActivity();
         }
 
 
         view.findViewById(R.id.login).setOnClickListener(this);
-        view.findViewById(R.id.bypassLogin).setOnClickListener(this);
+        passwordTV = view.findViewById(R.id.inputPasswordTextView);
+        toggleLogin = view.findViewById(R.id.toggleLogin);
+        toggleLogin.setOnClickListener(this);
         emailET = view.findViewById(R.id.email);
-        loginMessage = view.findViewById(R.id.loginMessage);
+        passwordET = view.findViewById(R.id.password);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getActivity().checkSelfPermission(cameraPermission[0])!= PackageManager.PERMISSION_GRANTED){
+            if (getActivity().checkSelfPermission(cameraPermission[0]) != PackageManager.PERMISSION_GRANTED) {
                 activity.requestPermissions(cameraPermission, CAMERA_REQUEST_CODE);
             }
         }
 
-        if (getActivity().getIntent()!=null){
+        if (getActivity().getIntent() != null) {
             FirebaseDynamicLinks.getInstance()
                     .getDynamicLink(getActivity().getIntent())
                     .addOnSuccessListener(getActivity(), new OnSuccessListener<PendingDynamicLinkData>() {
@@ -138,7 +141,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
                             if (pendingDynamicLinkData != null) {
                                 deepLink = pendingDynamicLinkData.getLink();
 
-                                completeLogin(deepLink+"");
+                                completeLogin(deepLink + "");
                             }
 
 
@@ -153,9 +156,9 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    void completeLogin(String emailLink){
+    void completeLogin(String emailLink) {
         // Confirm the link is a sign-in with email link.
-        Log.d(TAG, "onSuccess: "+emailLink);
+        Log.d(TAG, "onSuccess: " + emailLink);
         if (auth.isSignInWithEmailLink(emailLink)) {
             // Retrieve this from wherever you stored it
             email = sharedPreferences.getString(getString(R.string.login_email), "");
@@ -188,47 +191,70 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
 
     @Override
     public void onClick(final View v) {
-        switch (v.getId()){
-            case R.id.login:{
-                email = emailET.getText().toString();
-                if (email.isEmpty()||email==null){
-                    Toast.makeText(getContext(), R.string.auth_failed, Toast.LENGTH_SHORT).show();
-                }else{
-                    // send data to firebase
-                    ActionCodeSettings actionCodeSettings =
-                            ActionCodeSettings.newBuilder()
-                                    .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
-                                    .setAndroidPackageName("com.mobility.inclass07",true,"19").build();
+        email = emailET.getText().toString();
+        password = passwordET.getText().toString();
 
-                    auth.sendSignInLinkToEmail(email, actionCodeSettings)
-                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    if (task.isSuccessful()) {
-                                        // email is sent
-                                        Log.d(TAG, "Email sent.");
-                                        // TODO: set email in shared preference
-                                        sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
-                                        // change the system state to processing
-                                        loginMessage.setText(R.string.check_email_instruction);
-                                        // disable all inputs
-                                        // keyboard down
-                                        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                                        assert inputMethodManager != null;
-                                        inputMethodManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                                    }
-
-                                    Log.d(TAG, ""+task.getException());
-                                }
-                            });
-                }
+        switch (v.getId()) {
+            case R.id.login: {
+                boolean result = loginEmailOnly ?
+                        loginWithLinkToEmail(email, v) :
+                        loginWithEmailAndPassword(email, password);
                 break;
             }
-            case R.id.bypassLogin:{
-                goToNextActivity();
+            case R.id.toggleLogin: {
+                loginEmailOnly = !loginEmailOnly;
+                int text = !loginEmailOnly ? R.string.loginEmailOnly : R.string.loginEmailPassword;
+                tooglePassword(!loginEmailOnly);
+                toggleLogin.setText(getResources().getText(text));
                 break;
             }
         }
+    }
+
+    private boolean loginWithEmailAndPassword(String email, String password) {
+        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
+            Toast.makeText(getContext(), R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        auth.signInWithEmailAndPassword(email, password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+            @Override
+            public void onSuccess(AuthResult authResult) {
+            }
+        });
+        return true;
+    }
+
+    private boolean loginWithLinkToEmail(final String email, final View v) {
+        if (email == null || email.isEmpty()) {
+            Toast.makeText(getContext(), R.string.invalid_email, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // send data to firebase
+        ActionCodeSettings actionCodeSettings =
+                ActionCodeSettings.newBuilder()
+                        .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
+                        .setAndroidPackageName("com.mobility.inclass07", true, "19").build();
+
+        auth.sendSignInLinkToEmail(email, actionCodeSettings)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            // email is sent
+                            Log.d(TAG, "Email sent.");
+                            // TODO: set email in shared preference
+                            sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
+                            // disable all inputs
+                            // keyboard down
+                            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                            assert inputMethodManager != null;
+                            inputMethodManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                        }
+
+                        Log.d(TAG, "" + task.getException());
+                    }
+                });
+        return true;
     }
 
     @Override
@@ -242,14 +268,13 @@ public class AuthFragment extends Fragment implements View.OnClickListener{
     }
 
     void goToNextActivity(){
-        navController.navigate(R.id.action_authFragment_to_surveyForm);
+        navController.navigate(R.id.action_authFragment_to_teamListFragment);
     }
 
-    void systemStateLoading(){
-
-    }
-
-    void systemStateLoaded(){
+    void tooglePassword(boolean show) {
+        int view = show ? View.VISIBLE : View.INVISIBLE;
+        passwordTV.setVisibility(view);
+        passwordET.setVisibility(view);
 
     }
 

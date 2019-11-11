@@ -112,11 +112,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
         super.onViewCreated(view, savedInstanceState);
         navController = Navigation.findNavController(view);
 
-        if (auth.getCurrentUser() != null) {
-            goToNextActivity();
-        }
-
-
         view.findViewById(R.id.login).setOnClickListener(this);
         passwordTV = view.findViewById(R.id.inputPasswordTextView);
         toggleLogin = view.findViewById(R.id.toggleLogin);
@@ -219,6 +214,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
         auth.signInWithEmailAndPassword(email, password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
             @Override
             public void onSuccess(AuthResult authResult) {
+                goToNextActivity();
             }
         });
         return true;

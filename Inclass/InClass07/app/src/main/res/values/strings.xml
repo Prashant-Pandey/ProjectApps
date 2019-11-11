@@ -14,5 +14,29 @@
     <string name="loginEmailOnly">Login With Email Only</string>
     <string name="loginEmailPassword">Login With Email and Password</string>
     <string name="or">OR</string>
+    <string name="view_team_list">View Team List</string>
+    <string name="view_results">View Results</string>
+    <string name="add_team">Add Team</string>
+    <string name="rate_this_team">RATE THIS TEAM!</string>
+    <string name="no_evidence">No Evidence</string>
+    <string name="superior">Superior</string>
+    <string name="step_error">Answer cannot be empty</string>
+    <string name="question1">1. Poster content is of professional quality and indicates a mastery of the project subject master.</string>
+    <string name="question2">2. The presentation is organized, engaging, and includes a thorough description of the design and the implementation of the design.</string>
+    <string name="question3">3. All team members are suitably attired, are polite, demonstrate full knowledge of material, and can answer all relevant questions.</string>
+    <string name="question4">4. The work product (model, prototype, documentation set or computer simulation) is of professional quality in all respects.</string>
+    <string name="question5">5. The team implemented novel approaches and/or solutions in the development of the project.</string>
+    <string name="question6">6. The project has the potentioal to enhance the reputation of the Innovative Computing Project and/or CCI/DSI.</string>
+    <string name="question7">7. The team successfully explained the scope and results of their project in no more than 5 minutes.</string>
+    <string-array name="surveyQuestions">
+        <item>@string/question1</item>
+        <item>@string/question2</item>
+        <item>@string/question3</item>
+        <item>@string/question4</item>
+        <item>@string/question5</item>
+        <item>@string/question6</item>
+        <item>@string/question7</item>
+    </string-array>
+
 
 </resources>

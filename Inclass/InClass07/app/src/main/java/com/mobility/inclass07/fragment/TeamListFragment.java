@@ -1,67 +1,61 @@
 package com.mobility.inclass07.fragment;
 
+import android.app.AlertDialog;
 import android.content.Context;
-import android.net.Uri;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.mobility.inclass07.R;
+import com.mobility.inclass07.listener.TeamActionListener;
+import com.mobility.inclass07.adapter.TeamListAdapter;
+import com.mobility.inclass07.model.TeamModel;
+import com.mobility.inclass07.utilities.AppConstant;
+
+import java.util.ArrayList;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link TeamListFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link TeamListFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class TeamListFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class TeamListFragment extends Fragment implements TeamActionListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    private OnFragmentInteractionListener mListener;
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter mAdapter;
+    ArrayList<TeamModel> teamList = new ArrayList<>();
+    DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference(AppConstant.TEAM_DB_KEY);
+    NavController navController;
 
     public TeamListFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment TeamListFragment.
-     */
+
     // TODO: Rename and change types and number of parameters
     public static TeamListFragment newInstance(String param1, String param2) {
         TeamListFragment fragment = new TeamListFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -69,13 +63,6 @@ public class TeamListFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_team_list, container, false);
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
     }
 
     @Override
@@ -86,21 +73,113 @@ public class TeamListFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        navController = Navigation.findNavController(view);
+        setUpRecyclerView(view);
+        setUpAddFloater(view);
+    }
+
+    private void setUpAddFloater(View view) {
+        FloatingActionButton fab = getView().findViewById(R.id.fab);
+        fab.hide();
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LayoutInflater li = LayoutInflater.from(getActivity());
+                View promptsView = li.inflate(R.layout.create_new_team, null);
+
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+                alertDialogBuilder.setMessage("Add new team");
+                alertDialogBuilder.setPositiveButton("ADD", null);
+                alertDialogBuilder.setNegativeButton("CANCEL", null);
+                alertDialogBuilder.setView(promptsView);
+
+                final EditText chatrommName = promptsView.findViewById(R.id.teamName);
+
+                final AlertDialog alertDialog = alertDialogBuilder.create();
+
+                alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(final DialogInterface dialog) {
+                        Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                        positiveButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                addTeam(chatrommName.getText().toString());
+                                dialog.dismiss();
+                            }
+                        });
+
+                        Button negativeButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+                        negativeButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+
+                alertDialog.show();
+            }
+        });
+    }
+
+    private void addTeam(String name) {
+        TeamModel chatroom = new TeamModel();
+        chatroom.setName(name);
+        mRootRef.push().setValue(chatroom);
+    }
+
+    private void setUpRecyclerView(View view) {
+        recyclerView = view.findViewById(R.id.teamListRecyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mAdapter = new TeamListAdapter(teamList, this);
+        recyclerView.setAdapter(mAdapter);
+        initTeamList();
+    }
+
+    private void initTeamList() {
+
+        mRootRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    displayTeamList(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void displayTeamList(DataSnapshot dataSnapshot) {
+        teamList.clear();
+        for (DataSnapshot child : dataSnapshot.getChildren()) {
+            TeamModel team = child.getValue(TeamModel.class);
+            team.setId(child.getKey());
+            teamList.add(team);
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void rateTeam(TeamModel team) {
+        goToSurvey(team);
+    }
+
+    void goToSurvey(TeamModel team){
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(AppConstant.TEAM_ID, team.getId());
+        bundle.putSerializable(AppConstant.TEAM_NAME, team.getName());
+        navController.navigate(R.id.action_teamListFragment_to_surveyFragment, bundle);
     }
 }

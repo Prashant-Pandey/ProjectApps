@@ -8,4 +8,5 @@ public class AppConstant {
     public static final String SURVEY_QUESTION = "SURVEY_QUESTION";
     public static final int QUEST_BANK_LENGTH = 7;
     public static final int RADIO_EMPTY_VAL = -1;
+    public static final String SURVEY_TAG_FRAGMENT = "survey_tag";
 }

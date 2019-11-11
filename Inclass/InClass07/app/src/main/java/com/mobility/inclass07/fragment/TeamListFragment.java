@@ -177,6 +177,10 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
     }
 
     void goToSurvey(TeamModel team){
+        Fragment fragment = getActivity().getSupportFragmentManager().findFragmentByTag(AppConstant.SURVEY_TAG_FRAGMENT);
+        if(fragment != null) {
+            getActivity().getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+        }
         Bundle bundle = new Bundle();
         bundle.putSerializable(AppConstant.TEAM_ID, team.getId());
         bundle.putSerializable(AppConstant.TEAM_NAME, team.getName());

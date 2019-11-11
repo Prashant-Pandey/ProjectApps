@@ -109,13 +109,11 @@ public class SurveyFragment extends Fragment implements StepperLayout.StepperLis
     }
 
     @Override
-    public void onStepSelected(int newStepPosition) {
-
-    }
+    public void onStepSelected(int newStepPosition) {}
 
     @Override
     public void onReturn() {
-
+        Toast.makeText(getActivity(), "step return", Toast.LENGTH_SHORT).show();
     }
 
 

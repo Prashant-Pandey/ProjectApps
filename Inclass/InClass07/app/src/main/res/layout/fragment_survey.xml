@@ -4,4 +4,5 @@
     android:id="@+id/stepperLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:tag="survey_tag"
     app:ms_stepperType="progress_bar" />

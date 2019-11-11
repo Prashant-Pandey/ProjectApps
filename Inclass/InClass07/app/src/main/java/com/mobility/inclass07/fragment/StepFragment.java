@@ -20,7 +20,7 @@ import com.stepstone.stepper.VerificationError;
 public class StepFragment extends Fragment implements Step {
 
     String question;
-    int data = AppConstant.RADIO_EMPTY_VAL;
+    int data = AppConstant.RADIO_EMPTY_VAL, checkedRB = AppConstant.RADIO_EMPTY_VAL;
     RadioGroup radioGroup;
 
     public StepFragment() {
@@ -55,6 +55,9 @@ public class StepFragment extends Fragment implements Step {
         questionTV.setText(question);
 
         radioGroup = view.findViewById(R.id.radioGroup);
+        if (checkedRB != AppConstant.RADIO_EMPTY_VAL) {
+            radioGroup.check(checkedRB);
+        }
         onSelectedRadioBtn();
     }
 
@@ -89,6 +92,7 @@ public class StepFragment extends Fragment implements Step {
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
         {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
+                checkedRB = checkedId;
                 switch(checkedId){
                     case R.id.radioButton1:
                         data = 1;

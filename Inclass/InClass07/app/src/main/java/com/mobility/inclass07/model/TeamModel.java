@@ -7,7 +7,6 @@ public class TeamModel {
     private String name;
     private String id;
     private Map<String, Double> ratings;
-    private Double avgRatings;
 
     public String getName() {
         return name;
@@ -31,13 +30,5 @@ public class TeamModel {
 
     public void setRatings(Map<String, Double> ratings) {
         this.ratings = ratings;
-    }
-
-    public Double getAvgRatings() {
-        return avgRatings;
-    }
-
-    public void setAvgRatings(Double avgRatings) {
-        this.avgRatings = avgRatings;
     }
 }

@@ -20,4 +20,9 @@ public class MainActivity extends AppCompatActivity implements MainActionListene
     public void setTitle(String title) {
         getSupportActionBar().setTitle(title);
     }
+
+    @Override
+    public void onBackPressed() {
+        // disable back button
+    }
 }

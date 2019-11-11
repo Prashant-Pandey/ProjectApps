@@ -31,7 +31,11 @@ import com.mobility.inclass07.adapter.TeamListAdapter;
 import com.mobility.inclass07.model.TeamModel;
 import com.mobility.inclass07.utilities.AppConstant;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 
 
 public class TeamListFragment extends Fragment implements TeamActionListener {
@@ -166,10 +170,34 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
         for (DataSnapshot child : dataSnapshot.getChildren()) {
             TeamModel team = child.getValue(TeamModel.class);
             team.setId(child.getKey());
+            team.setAvgRatings(calcRatingAvg(team.getRatings()));
             teamList.add(team);
         }
+        sortTeamByAvgRating();
         mAdapter.notifyDataSetChanged();
     }
+
+    private void sortTeamByAvgRating() {
+        Collections.sort(teamList, new Comparator<TeamModel>() {
+            @Override
+            public int compare(TeamModel lhs, TeamModel rhs) {
+                return Double.compare(rhs.getAvgRatings(), lhs.getAvgRatings());
+            }
+        });
+    }
+
+    private Double calcRatingAvg(Map<String, Double> ratings) {
+        if (ratings == null || ratings.isEmpty()) {
+            return 0.0;
+        }
+
+        double sum = 0.0;
+        for (Map.Entry<String, Double> avg : ratings.entrySet()) {
+            sum += avg.getValue();
+        }
+        return sum / ratings.size();
+    }
+
 
     @Override
     public void rateTeam(TeamModel team) {

@@ -45,22 +45,16 @@ public class TeamListAdapter extends RecyclerView.Adapter<TeamListAdapter.ViewHo
     public void onBindViewHolder(@NonNull final ViewHolder holder, final int position) {
         TeamModel team = teamArrayList.get(position);
         holder.name.setText(team.getName());
-        holder.ratings.setText(calcRatingAvg(team.getRatings()));
+        holder.ratings.setText(calcRatingAvg(team));
         holder.rate.setVisibility(showRateAction(team.getRatings()) ? View.VISIBLE : View.GONE);
     }
 
-    private String calcRatingAvg(Map<String, Double> ratings) {
-        if (ratings == null || ratings.isEmpty()) {
+    private String calcRatingAvg(TeamModel team) {
+        if (team.getRatings() == null || team.getAvgRatings() == 0.0) {
             return "N/A";
         }
 
-        double sum = 0.0;
-        for (Map.Entry<String, Double> avg : ratings.entrySet()) {
-            sum += avg.getValue();
-        }
-        double avgRatings = sum / ratings.size();
-
-        return new DecimalFormat("##.#").format(avgRatings) + "/5 \t(" + ratings.size() + ")";
+        return new DecimalFormat("##.#").format(team.getAvgRatings()) + "/5 \t(" + team.getRatings().size() + ")";
     }
 
     private boolean showRateAction(Map<String, Double> ratings) {

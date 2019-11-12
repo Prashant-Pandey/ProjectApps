@@ -50,13 +50,11 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     EditText passwordET;
     TextView passwordTV;
     String email, password, TAG = this.getClass().getSimpleName();
-    Button toggleLogin;
     int CAMERA_REQUEST_CODE = 23;
     Activity activity;
     String[] cameraPermission = new String[]{Manifest.permission.CAMERA};
     SharedPreferences sharedPreferences;
     FirebaseAuth auth;
-    boolean loginEmailOnly = false;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -114,8 +112,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 
         view.findViewById(R.id.login).setOnClickListener(this);
         passwordTV = view.findViewById(R.id.inputPasswordTextView);
-        toggleLogin = view.findViewById(R.id.toggleLogin);
-        toggleLogin.setOnClickListener(this);
         emailET = view.findViewById(R.id.email);
         passwordET = view.findViewById(R.id.password);
 
@@ -191,34 +187,13 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 
         switch (v.getId()) {
             case R.id.login: {
-                boolean result = loginEmailOnly ?
-                        loginWithLinkToEmail(email, v) :
-                        loginWithEmailAndPassword(email, password);
-                break;
-            }
-            case R.id.toggleLogin: {
-                loginEmailOnly = !loginEmailOnly;
-                int text = !loginEmailOnly ? R.string.loginEmailOnly : R.string.loginEmailPassword;
-                tooglePassword(!loginEmailOnly);
-                toggleLogin.setText(getResources().getText(text));
+                loginWithLinkToEmail(email, v);
                 break;
             }
         }
     }
 
-    private boolean loginWithEmailAndPassword(String email, String password) {
-        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
-            Toast.makeText(getContext(), R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        auth.signInWithEmailAndPassword(email, password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-            @Override
-            public void onSuccess(AuthResult authResult) {
-                goToNextActivity();
-            }
-        });
-        return true;
-    }
+
 
     private boolean loginWithLinkToEmail(final String email, final View v) {
         if (email == null || email.isEmpty()) {
@@ -265,13 +240,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 
     void goToNextActivity(){
         navController.navigate(R.id.action_authFragment_to_teamListFragment);
-    }
-
-    void tooglePassword(boolean show) {
-        int view = show ? View.VISIBLE : View.INVISIBLE;
-        passwordTV.setVisibility(view);
-        passwordET.setVisibility(view);
-
     }
 
 }

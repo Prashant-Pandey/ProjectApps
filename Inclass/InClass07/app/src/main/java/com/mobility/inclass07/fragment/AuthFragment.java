@@ -33,9 +33,16 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.mobility.inclass07.R;
+
+import java.util.ArrayList;
 
 
 public class AuthFragment extends Fragment implements View.OnClickListener {
@@ -50,14 +57,12 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     EditText passwordET;
     TextView passwordTV;
     String email, password, TAG = this.getClass().getSimpleName();
-    Button toggleLogin;
     int CAMERA_REQUEST_CODE = 23;
     Activity activity;
     String[] cameraPermission = new String[]{Manifest.permission.CAMERA};
     SharedPreferences sharedPreferences;
     FirebaseAuth auth;
-    boolean loginEmailOnly = false;
-
+    FirebaseFirestore mDatabaseReference;
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -88,6 +93,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(activity);
+        mDatabaseReference = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
@@ -114,8 +120,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 
         view.findViewById(R.id.login).setOnClickListener(this);
         passwordTV = view.findViewById(R.id.inputPasswordTextView);
-        toggleLogin = view.findViewById(R.id.toggleLogin);
-        toggleLogin.setOnClickListener(this);
         emailET = view.findViewById(R.id.email);
         passwordET = view.findViewById(R.id.password);
 
@@ -187,38 +191,53 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(final View v) {
         email = emailET.getText().toString();
-        password = passwordET.getText().toString();
 
         switch (v.getId()) {
             case R.id.login: {
-                boolean result = loginEmailOnly ?
-                        loginWithLinkToEmail(email, v) :
-                        loginWithEmailAndPassword(email, password);
-                break;
-            }
-            case R.id.toggleLogin: {
-                loginEmailOnly = !loginEmailOnly;
-                int text = !loginEmailOnly ? R.string.loginEmailOnly : R.string.loginEmailPassword;
-                tooglePassword(!loginEmailOnly);
-                toggleLogin.setText(getResources().getText(text));
+                // if the email exists in admin table
+                mDatabaseReference.collection(getString(R.string.admin_collection)).get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    ArrayList<String> adminArrayList = new ArrayList<>();
+                                    assert task.getResult() != null;
+                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                        Log.d(TAG, "onComplete: "+document.toString());
+                                        adminArrayList.addAll(document.getData().keySet());
+
+                                    }
+                                    if (adminArrayList.contains(email)){
+                                        sharedPreferences.edit().putString(getString(R.string.admin_login_email), email).apply();
+                                        // go to admin page
+                                        navController.navigate(R.id.action_authFragment_to_adminAuthFragment);
+                                    }else{
+                                        Log.d(TAG, "onComplete: not admin");
+                                        loginWithLinkToEmail(email, v);
+                                    }
+
+//                                    if (!foundAdmin){
+//                                        // login as a judge
+//                                        loginWithLinkToEmail(email, v);
+//                                    }
+                                } else {
+                                    // login as a judge
+                                    loginWithLinkToEmail(email, v);
+                                }
+                            }
+                        })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // login as a judge
+                        loginWithLinkToEmail(email, v);
+                    }
+                });
                 break;
             }
         }
     }
 
-    private boolean loginWithEmailAndPassword(String email, String password) {
-        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
-            Toast.makeText(getContext(), R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        auth.signInWithEmailAndPassword(email, password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-            @Override
-            public void onSuccess(AuthResult authResult) {
-                goToNextActivity();
-            }
-        });
-        return true;
-    }
 
     private boolean loginWithLinkToEmail(final String email, final View v) {
         if (email == null || email.isEmpty()) {
@@ -265,13 +284,6 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 
     void goToNextActivity(){
         navController.navigate(R.id.action_authFragment_to_teamListFragment);
-    }
-
-    void tooglePassword(boolean show) {
-        int view = show ? View.VISIBLE : View.INVISIBLE;
-        passwordTV.setVisibility(view);
-        passwordET.setVisibility(view);
-
     }
 
 }

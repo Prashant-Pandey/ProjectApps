@@ -12,6 +12,9 @@
         <action
             android:id="@+id/action_authFragment_to_teamListFragment"
             app:destination="@id/teamListFragment" />
+        <action
+            android:id="@+id/action_authFragment_to_adminAuthFragment"
+            app:destination="@id/adminAuthFragment" />
     </fragment>
     <fragment
         android:id="@+id/teamListFragment"
@@ -29,6 +32,15 @@
         tools:layout="@layout/fragment_survey" >
         <action
             android:id="@+id/action_surveyFragment_to_teamListFragment"
+            app:destination="@id/teamListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/adminAuthFragment"
+        android:name="com.mobility.inclass07.fragment.AdminAuthFragment"
+        android:label="fragment_admin_auth"
+        tools:layout="@layout/fragment_admin_auth" >
+        <action
+            android:id="@+id/action_adminAuthFragment_to_teamListFragment"
             app:destination="@id/teamListFragment" />
     </fragment>
 </navigation>

@@ -9,11 +9,12 @@
     <string name="login_instruction">Please enter your registered email to login into the system</string>
     <string name="random_email_placeholder">annonymous@email.com</string>
     <string name="login_email_shared_preference">EMAIL</string>
+    <string name="admin_login_email">adminEmail</string>
     <string name="login_email">email</string>
     <string name="logout">Logout</string>
     <string name="loginEmailOnly">Login With Email Only</string>
     <string name="loginEmailPassword">Login With Email and Password</string>
-    <string name="or">OR</string>
+    <string name="admin_collection">admin</string>
     <string name="view_team_list">View Team List</string>
     <string name="view_results">View Results</string>
     <string name="add_team">Add Team</string>

@@ -33,9 +33,16 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.mobility.inclass07.R;
+
+import java.util.ArrayList;
 
 
 public class AuthFragment extends Fragment implements View.OnClickListener {
@@ -55,7 +62,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     String[] cameraPermission = new String[]{Manifest.permission.CAMERA};
     SharedPreferences sharedPreferences;
     FirebaseAuth auth;
-
+    FirebaseFirestore mDatabaseReference;
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -86,6 +93,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(activity);
+        mDatabaseReference = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
@@ -183,16 +191,52 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(final View v) {
         email = emailET.getText().toString();
-        password = passwordET.getText().toString();
 
         switch (v.getId()) {
             case R.id.login: {
-                loginWithLinkToEmail(email, v);
+                // if the email exists in admin table
+                mDatabaseReference.collection(getString(R.string.admin_collection)).get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    ArrayList<String> adminArrayList = new ArrayList<>();
+                                    assert task.getResult() != null;
+                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                        Log.d(TAG, "onComplete: "+document.toString());
+                                        adminArrayList.addAll(document.getData().keySet());
+
+                                    }
+                                    if (adminArrayList.contains(email)){
+                                        sharedPreferences.edit().putString(getString(R.string.admin_login_email), email).apply();
+                                        // go to admin page
+                                        navController.navigate(R.id.action_authFragment_to_adminAuthFragment);
+                                    }else{
+                                        Log.d(TAG, "onComplete: not admin");
+                                        loginWithLinkToEmail(email, v);
+                                    }
+
+//                                    if (!foundAdmin){
+//                                        // login as a judge
+//                                        loginWithLinkToEmail(email, v);
+//                                    }
+                                } else {
+                                    // login as a judge
+                                    loginWithLinkToEmail(email, v);
+                                }
+                            }
+                        })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // login as a judge
+                        loginWithLinkToEmail(email, v);
+                    }
+                });
                 break;
             }
         }
     }
-
 
 
     private boolean loginWithLinkToEmail(final String email, final View v) {

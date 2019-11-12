@@ -12,9 +12,12 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -22,6 +25,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.mobility.inclass07.R;
+
+import java.util.Objects;
 
 
 /**
@@ -32,7 +37,7 @@ import com.mobility.inclass07.R;
  * Use the {@link AdminAuthFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AdminAuthFragment extends Fragment {
+public class AdminAuthFragment extends Fragment implements View.OnClickListener{
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -46,6 +51,8 @@ public class AdminAuthFragment extends Fragment {
     FirebaseAuth auth;
     SharedPreferences sharedPreferences;
     NavController navController;
+    String email, password, TAG = this.getClass().getSimpleName();
+    EditText passwordET;
 
     public AdminAuthFragment() {
         // Required empty public constructor
@@ -86,6 +93,7 @@ public class AdminAuthFragment extends Fragment {
         activity = getActivity();
         assert activity != null;
         sharedPreferences = getActivity().getSharedPreferences(getString(R.string.login_email_shared_preference), Context.MODE_PRIVATE);
+        email=sharedPreferences.getString(getString(R.string.admin_login_email), "");
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_admin_auth, container, false);
     }
@@ -94,6 +102,8 @@ public class AdminAuthFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         navController = Navigation.findNavController(view);
+        view.findViewById(R.id.login).setOnClickListener(this);
+        passwordET = view.findViewById(R.id.password);
     }
 
     private boolean loginWithEmailAndPassword(String email, String password) {
@@ -111,7 +121,8 @@ public class AdminAuthFragment extends Fragment {
     }
 
     void goToAdminFragment(){
-//        navController.navigate(R.id.);
+        navController.navigate(R.id.action_adminAuthFragment_to_teamListFragment);
+        Log.d(TAG, "goToAdminFragment: login successfull");
     }
 
 
@@ -123,6 +134,22 @@ public class AdminAuthFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.login:{
+                Log.d(TAG, "onClick: login button");
+                password = passwordET.getText().toString();
+                if (email != null && !Objects.equals(password, "")){
+                    loginWithEmailAndPassword(email, password);
+                    Log.d(TAG, "onClick: login password work");
+                }else {
+                    Toast.makeText(getContext(), "please input valid password", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     /**

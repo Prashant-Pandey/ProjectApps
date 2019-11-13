@@ -30,13 +30,6 @@
         android:label="fragment_team_list"
         tools:layout="@layout/fragment_team_list">
         <action
-            android:id="@+id/action_teamListFragment_to_surveyFragment"
-            app:destination="@id/surveyFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
-        <action
             android:id="@+id/action_teamListFragment_to_authFragment"
             app:destination="@id/authFragment"
             app:enterAnim="@anim/slide_in_right"
@@ -45,19 +38,6 @@
             app:popExitAnim="@anim/slide_out_right"
             app:popUpTo="@id/authFragment"
             app:popUpToInclusive="true" />
-    </fragment>
-    <fragment
-        android:id="@+id/surveyFragment"
-        android:name="com.mobility.inclass07.fragment.SurveyFragment"
-        android:label="fragment_survey"
-        tools:layout="@layout/fragment_survey">
-        <action
-            android:id="@+id/action_surveyFragment_to_teamListFragment"
-            app:destination="@id/teamListFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/adminAuthFragment"

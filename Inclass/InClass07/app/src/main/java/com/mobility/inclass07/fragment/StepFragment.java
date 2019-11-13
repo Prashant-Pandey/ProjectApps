@@ -20,7 +20,7 @@ import com.stepstone.stepper.VerificationError;
 public class StepFragment extends Fragment implements Step {
 
     String question;
-    int data = AppConstant.RADIO_EMPTY_VAL, checkedRB = AppConstant.RADIO_EMPTY_VAL;
+    public int data = AppConstant.RADIO_EMPTY_VAL, checkedRB = AppConstant.RADIO_EMPTY_VAL;
     RadioGroup radioGroup;
 
     public StepFragment() {

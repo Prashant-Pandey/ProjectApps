@@ -2,6 +2,7 @@ package com.mobility.inclass07.fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -40,6 +41,7 @@ import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firestore.admin.v1beta1.Progress;
 import com.mobility.inclass07.R;
 
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    ProgressDialog progressDialog;
 
     public AuthFragment() {
         // Required empty public constructor
@@ -93,6 +96,9 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(activity);
+        setHasOptionsMenu(false);
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setMessage("Loading...");
         mDatabaseReference = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
         if (getArguments() != null) {
@@ -123,35 +129,37 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
         emailET = view.findViewById(R.id.email);
         passwordET = view.findViewById(R.id.password);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getActivity().checkSelfPermission(cameraPermission[0]) != PackageManager.PERMISSION_GRANTED) {
-                activity.requestPermissions(cameraPermission, CAMERA_REQUEST_CODE);
-            }
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            if (getActivity().checkSelfPermission(cameraPermission[0]) != PackageManager.PERMISSION_GRANTED) {
+//                activity.requestPermissions(cameraPermission, CAMERA_REQUEST_CODE);
+//            }
+//        }
+        if (!sharedPreferences.getString(getString(R.string.login_email), "").equals("")) {
+            if (getActivity().getIntent() != null) {
+                FirebaseDynamicLinks.getInstance()
+                        .getDynamicLink(getActivity().getIntent())
+                        .addOnSuccessListener(getActivity(), new OnSuccessListener<PendingDynamicLinkData>() {
+                            @Override
+                            public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
+                                // Get deep link from result (may be null if no link is found)
+                                Uri deepLink = null;
+                                if (pendingDynamicLinkData != null) {
+                                    deepLink = pendingDynamicLinkData.getLink();
 
-        if (getActivity().getIntent() != null) {
-            FirebaseDynamicLinks.getInstance()
-                    .getDynamicLink(getActivity().getIntent())
-                    .addOnSuccessListener(getActivity(), new OnSuccessListener<PendingDynamicLinkData>() {
-                        @Override
-                        public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
-                            // Get deep link from result (may be null if no link is found)
-                            Uri deepLink = null;
-                            if (pendingDynamicLinkData != null) {
-                                deepLink = pendingDynamicLinkData.getLink();
+                                    completeLogin(deepLink + "");
+                                }
 
-                                completeLogin(deepLink + "");
+
                             }
+                        })
+                        .addOnFailureListener(getActivity(), new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w(TAG, "getDynamicLink:onFailure", e);
+                            }
+                        });
 
-
-                        }
-                    })
-                    .addOnFailureListener(getActivity(), new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(TAG, "getDynamicLink:onFailure", e);
-                        }
-                    });
+            }
         }
     }
 
@@ -195,6 +203,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.login: {
                 // if the email exists in admin table
+                progressDialog.show();
                 mDatabaseReference.collection(getString(R.string.admin_collection)).get()
                         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                             @Override
@@ -203,15 +212,16 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
                                     ArrayList<String> adminArrayList = new ArrayList<>();
                                     assert task.getResult() != null;
                                     for (QueryDocumentSnapshot document : task.getResult()) {
-                                        Log.d(TAG, "onComplete: "+document.toString());
+                                        Log.d(TAG, "onComplete: " + document.toString());
                                         adminArrayList.addAll(document.getData().keySet());
 
                                     }
-                                    if (adminArrayList.contains(email)){
+                                    progressDialog.dismiss();
+                                    if (adminArrayList.contains(email)) {
                                         sharedPreferences.edit().putString(getString(R.string.admin_login_email), email).apply();
                                         // go to admin page
                                         navController.navigate(R.id.action_authFragment_to_adminAuthFragment);
-                                    }else{
+                                    } else {
                                         Log.d(TAG, "onComplete: not admin");
                                         loginWithLinkToEmail(email, v);
                                     }
@@ -221,18 +231,20 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
 //                                        loginWithLinkToEmail(email, v);
 //                                    }
                                 } else {
+                                    progressDialog.dismiss();
                                     // login as a judge
                                     loginWithLinkToEmail(email, v);
                                 }
                             }
                         })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // login as a judge
-                        loginWithLinkToEmail(email, v);
-                    }
-                });
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                // login as a judge
+                                progressDialog.dismiss();
+                                loginWithLinkToEmail(email, v);
+                            }
+                        });
                 break;
             }
         }
@@ -249,13 +261,15 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
                 ActionCodeSettings.newBuilder()
                         .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
                         .setAndroidPackageName("com.mobility.inclass07", true, "19").build();
-
+        if (!progressDialog.isShowing()) progressDialog.show();
         auth.sendSignInLinkToEmail(email, actionCodeSettings)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             // email is sent
+                            progressDialog.dismiss();
+                            Toast.makeText(getContext(), "An email has been sent to this ID, Please check!", Toast.LENGTH_SHORT).show();
                             Log.d(TAG, "Email sent.");
                             // TODO: set email in shared preference
                             sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
@@ -275,14 +289,14 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode==CAMERA_REQUEST_CODE&&grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-        }else{
+        if (requestCode == CAMERA_REQUEST_CODE && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        } else {
             Toast.makeText(getContext(), "You've not granted permissions", Toast.LENGTH_LONG).show();
         }
     }
 
-    void goToNextActivity(){
+    void goToNextActivity() {
         navController.navigate(R.id.action_authFragment_to_teamListFragment);
     }
 

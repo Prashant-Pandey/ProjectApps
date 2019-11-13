@@ -51,7 +51,7 @@ public class SurveyFragment extends Fragment implements StepperLayout.StepperLis
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setHasOptionsMenu(false);
         if (getArguments() != null) {
             teamId = (String) getArguments().getSerializable(AppConstant.TEAM_ID);
             teamName = (String) getArguments().getSerializable(AppConstant.TEAM_NAME);

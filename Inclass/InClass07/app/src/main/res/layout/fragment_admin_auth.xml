@@ -1,37 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".fragment.AdminAuthFragment"
-    android:orientation="vertical"
-    android:gravity="center">
+    android:gravity="center"
+    tools:context=".fragment.AdminAuthFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
         android:id="@+id/inputPasswordTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enter Password" />
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Enter Password"
+        app:layout_constraintBottom_toTopOf="@+id/password"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:layout_width="355dp"
-        android:layout_height="51dp"
         android:id="@+id/password"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="64dp"
         android:ems="10"
-        android:inputType="textPassword"/>
+        android:gravity="center_horizontal"
+        android:hint="@string/password_placeholder"
+        android:inputType="textPassword"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/login"
-        android:layout_width="349dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="52dp"
-        android:text="Submit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="64dp"
+        android:text="Let's Go!"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.507"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/password" />
 
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,9 @@
 package com.mobility.inclass07.adapter;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mobility.inclass07.MainActivity;
 import com.mobility.inclass07.R;
 import com.mobility.inclass07.listener.TeamActionListener;
 import com.mobility.inclass07.model.TeamModel;
@@ -22,12 +26,17 @@ public class TeamListAdapter extends RecyclerView.Adapter<TeamListAdapter.ViewHo
 
     ArrayList<TeamModel> teamArrayList;
     TeamActionListener asyncTask;
-
+    SharedPreferences sharedPreferences;
     String TAG = "demo";
+    Context context;
+    String isAdmin;
 
-    public TeamListAdapter(ArrayList<TeamModel> productArrayList, TeamActionListener asyncTask) {
+    public TeamListAdapter(ArrayList<TeamModel> productArrayList, TeamActionListener asyncTask, Context context) {
         this.teamArrayList = productArrayList;
         this.asyncTask = asyncTask;
+        this.context = context;
+        sharedPreferences = context.getSharedPreferences(context.getString(R.string.login_email_shared_preference), Context.MODE_PRIVATE);
+        isAdmin = sharedPreferences.getString(context.getString(R.string.admin_login_email), null);
     }
 
     @NonNull
@@ -46,7 +55,14 @@ public class TeamListAdapter extends RecyclerView.Adapter<TeamListAdapter.ViewHo
         TeamModel team = teamArrayList.get(position);
         holder.name.setText(team.getName());
         holder.ratings.setText(calcRatingAvg(team));
-        holder.rate.setVisibility(showRateAction(team.getRatings()) ? View.VISIBLE : View.GONE);
+        if (isAdmin != null) {
+            holder.rate.setVisibility(View.GONE);
+            holder.ratings.setVisibility(View.VISIBLE);
+        } else {
+            holder.rate.setVisibility(View.VISIBLE);
+            holder.rate.setVisibility(showRateAction(team.getRatings()) ? View.VISIBLE : View.GONE);
+            holder.ratings.setVisibility(View.GONE);
+        }
     }
 
     private String calcRatingAvg(TeamModel team) {
@@ -79,17 +95,19 @@ public class TeamListAdapter extends RecyclerView.Adapter<TeamListAdapter.ViewHo
             super(itemView);
             name = itemView.findViewById(R.id.teamNameTextView);
             ratings = itemView.findViewById(R.id.ratingTextView);
+
             rate = itemView.findViewById(R.id.rateTeam);
-            rate.setPaintFlags(rate.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+            rate.setPaintFlags(rate.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+
             rate.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int p = getLayoutPosition();
                     TeamModel team = teamArrayList.get(p);
                     asyncTask.rateTeam(team);
-
                 }
             });
+
 
         }
     }

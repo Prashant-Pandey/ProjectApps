@@ -7,7 +7,8 @@
     <string name="invalid_email">Please input valid email</string>
     <string name="check_email_instruction">Please check your mail to login to application</string>
     <string name="login_instruction">Please enter your registered email to login into the system</string>
-    <string name="random_email_placeholder">annonymous@email.com</string>
+    <string name="random_email_placeholder">john.doe@gmail.com</string>
+    <string name="password_placeholder">Must be at least 6 characters</string>
     <string name="login_email_shared_preference">EMAIL</string>
     <string name="admin_login_email">adminEmail</string>
     <string name="login_email">email</string>

@@ -1,8 +1,10 @@
 package com.mobility.inclass07.fragment;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -14,10 +16,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
@@ -45,6 +51,9 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
     ArrayList<TeamModel> teamList = new ArrayList<>();
     DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference(AppConstant.TEAM_DB_KEY);
     NavController navController;
+    SharedPreferences sharedPreferences;
+    String isAdmin;
+    ProgressDialog progressDialog;
 
     public TeamListFragment() {
         // Required empty public constructor
@@ -60,6 +69,11 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setMessage("Loading...");
+        sharedPreferences = getActivity().getSharedPreferences(getContext().getString(R.string.login_email_shared_preference), Context.MODE_PRIVATE);
+        isAdmin = sharedPreferences.getString(getContext().getString(R.string.admin_login_email), null);
     }
 
     @Override
@@ -89,7 +103,8 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
 
     private void setUpAddFloater(View view) {
         FloatingActionButton fab = getView().findViewById(R.id.fab);
-        fab.hide();
+        if (isAdmin == null)
+            fab.hide();
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -143,16 +158,17 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
         recyclerView = view.findViewById(R.id.teamListRecyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mAdapter = new TeamListAdapter(teamList, this);
+        mAdapter = new TeamListAdapter(teamList, this, getContext());
         recyclerView.setAdapter(mAdapter);
         initTeamList();
     }
 
     private void initTeamList() {
-
+        progressDialog.show();
         mRootRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                progressDialog.dismiss();
                 if (dataSnapshot.exists()) {
                     displayTeamList(dataSnapshot);
                 }
@@ -160,7 +176,8 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                progressDialog.dismiss();
+                Toast.makeText(getContext(), "Oops! Something went wrong!", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -173,7 +190,8 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
             team.setAvgRatings(calcRatingAvg(team.getRatings()));
             teamList.add(team);
         }
-        sortTeamByAvgRating();
+        if (isAdmin != null)
+            sortTeamByAvgRating();
         mAdapter.notifyDataSetChanged();
     }
 
@@ -204,14 +222,35 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
         goToSurvey(team);
     }
 
-    void goToSurvey(TeamModel team){
+    void goToSurvey(TeamModel team) {
         Fragment fragment = getActivity().getSupportFragmentManager().findFragmentByTag(AppConstant.SURVEY_TAG_FRAGMENT);
-        if(fragment != null) {
+        if (fragment != null) {
             getActivity().getSupportFragmentManager().beginTransaction().remove(fragment).commit();
         }
         Bundle bundle = new Bundle();
         bundle.putSerializable(AppConstant.TEAM_ID, team.getId());
         bundle.putSerializable(AppConstant.TEAM_NAME, team.getName());
         navController.navigate(R.id.action_teamListFragment_to_surveyFragment, bundle);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        MenuInflater menuInflater = getActivity().getMenuInflater();
+        menuInflater.inflate(R.menu.menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.logout:
+                sharedPreferences.edit().clear().commit();
+                getContext().getSharedPreferences(getString(R.string.login_email_shared_preference), 0).edit().clear().commit();
+                navController.navigate(R.id.action_teamListFragment_to_authFragment);
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

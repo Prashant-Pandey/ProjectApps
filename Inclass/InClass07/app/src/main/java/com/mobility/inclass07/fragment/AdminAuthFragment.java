@@ -1,6 +1,7 @@
 package com.mobility.inclass07.fragment;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -20,7 +21,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -37,7 +40,7 @@ import java.util.Objects;
  * Use the {@link AdminAuthFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AdminAuthFragment extends Fragment implements View.OnClickListener{
+public class AdminAuthFragment extends Fragment implements View.OnClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -53,6 +56,7 @@ public class AdminAuthFragment extends Fragment implements View.OnClickListener{
     NavController navController;
     String email, password, TAG = this.getClass().getSimpleName();
     EditText passwordET;
+    ProgressDialog progressDialog;
 
     public AdminAuthFragment() {
         // Required empty public constructor
@@ -80,6 +84,10 @@ public class AdminAuthFragment extends Fragment implements View.OnClickListener{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(activity);
+        setHasOptionsMenu(false);
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setMessage("Loading...");
+
         auth = FirebaseAuth.getInstance();
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
@@ -93,7 +101,7 @@ public class AdminAuthFragment extends Fragment implements View.OnClickListener{
         activity = getActivity();
         assert activity != null;
         sharedPreferences = getActivity().getSharedPreferences(getString(R.string.login_email_shared_preference), Context.MODE_PRIVATE);
-        email=sharedPreferences.getString(getString(R.string.admin_login_email), "");
+        email = sharedPreferences.getString(getString(R.string.admin_login_email), "");
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_admin_auth, container, false);
     }
@@ -111,16 +119,23 @@ public class AdminAuthFragment extends Fragment implements View.OnClickListener{
             Toast.makeText(getContext(), R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
             return false;
         }
-        auth.signInWithEmailAndPassword(email, password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+        progressDialog.show();
+        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
-            public void onSuccess(AuthResult authResult) {
-                goToAdminFragment();
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful()) {
+                    progressDialog.dismiss();
+                    goToAdminFragment();
+                } else {
+                    progressDialog.dismiss();
+                    Toast.makeText(getContext(), "Password Incorrect! Please try again", Toast.LENGTH_SHORT).show();
+                }
             }
         });
         return true;
     }
 
-    void goToAdminFragment(){
+    void goToAdminFragment() {
         navController.navigate(R.id.action_adminAuthFragment_to_teamListFragment);
         Log.d(TAG, "goToAdminFragment: login successfull");
     }
@@ -138,15 +153,15 @@ public class AdminAuthFragment extends Fragment implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.login:{
+        switch (v.getId()) {
+            case R.id.login: {
                 Log.d(TAG, "onClick: login button");
                 password = passwordET.getText().toString();
-                if (email != null && !Objects.equals(password, "")){
+                if (email != null && !Objects.equals(password, "")) {
                     loginWithEmailAndPassword(email, password);
                     Log.d(TAG, "onClick: login password work");
-                }else {
-                    Toast.makeText(getContext(), "please input valid password", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Please provide valid password", Toast.LENGTH_SHORT).show();
                 }
             }
         }

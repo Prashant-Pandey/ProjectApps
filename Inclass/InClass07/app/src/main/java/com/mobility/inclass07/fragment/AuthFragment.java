@@ -256,38 +256,59 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
             Toast.makeText(getContext(), R.string.invalid_email, Toast.LENGTH_SHORT).show();
             return false;
         }
-        // send data to firebase
-        ActionCodeSettings actionCodeSettings =
-                ActionCodeSettings.newBuilder()
-                        .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
-                        .setAndroidPackageName("com.mobility.inclass07", true, "19").build();
-        if (!progressDialog.isShowing()) progressDialog.show();
-        auth.sendSignInLinkToEmail(email, actionCodeSettings)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            // email is sent
-                            progressDialog.dismiss();
-                            Toast.makeText(getContext(), "An email has been sent to this ID, Please check!", Toast.LENGTH_SHORT).show();
-                            Log.d(TAG, "Email sent.");
-                            // TODO: set email in shared preference
-                            sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
-                            // disable all inputs
-                            // keyboard down
-                            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                            assert inputMethodManager != null;
-                            inputMethodManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                        }
-
-                        Log.d(TAG, "" + task.getException());
+        mDatabaseReference.collection("Event_Panelist").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    ArrayList<String> panelistArrayList = new ArrayList<>();
+                    assert task.getResult() != null;
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Log.d(TAG, "onComplete: " + document.toString());
+                        panelistArrayList.addAll(document.getData().keySet());
                     }
-                });
+                    progressDialog.dismiss();
+                    if (panelistArrayList.contains(email)) {
+                        // send data to firebase
+                        ActionCodeSettings actionCodeSettings =
+                                ActionCodeSettings.newBuilder()
+                                        .setUrl("https://schoolvote.page.link").setHandleCodeInApp(true)
+                                        .setAndroidPackageName("com.mobility.inclass07", true, "19").build();
+                        if (!progressDialog.isShowing()) progressDialog.show();
+                        auth.sendSignInLinkToEmail(email, actionCodeSettings)
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            // email is sent
+                                            progressDialog.dismiss();
+                                            Toast.makeText(getContext(), "An email has been sent to this ID, Please check!", Toast.LENGTH_SHORT).show();
+                                            Log.d(TAG, "Email sent.");
+                                            // TODO: set email in shared preference
+                                            sharedPreferences.edit().putString(getString(R.string.login_email), email).apply();
+                                            // disable all inputs
+                                            // keyboard down
+                                            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                            assert inputMethodManager != null;
+                                            inputMethodManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                                        }
+
+                                        Log.d(TAG, "" + task.getException());
+                                    }
+                                });
+                    } else {
+                        Toast.makeText(getContext(), "Unauthorized!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+
+
         return true;
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_REQUEST_CODE && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

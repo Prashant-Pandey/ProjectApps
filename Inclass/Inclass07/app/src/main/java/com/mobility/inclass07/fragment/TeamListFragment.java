@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -32,6 +33,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.mobility.inclass07.R;
+import com.mobility.inclass07.SurveyActivity;
 import com.mobility.inclass07.listener.TeamActionListener;
 import com.mobility.inclass07.adapter.TeamListAdapter;
 import com.mobility.inclass07.model.TeamModel;
@@ -223,14 +225,10 @@ public class TeamListFragment extends Fragment implements TeamActionListener {
     }
 
     void goToSurvey(TeamModel team) {
-        Fragment fragment = getActivity().getSupportFragmentManager().findFragmentByTag(AppConstant.SURVEY_TAG_FRAGMENT);
-        if (fragment != null) {
-            getActivity().getSupportFragmentManager().beginTransaction().remove(fragment).commit();
-        }
-        Bundle bundle = new Bundle();
-        bundle.putSerializable(AppConstant.TEAM_ID, team.getId());
-        bundle.putSerializable(AppConstant.TEAM_NAME, team.getName());
-        navController.navigate(R.id.action_teamListFragment_to_surveyFragment, bundle);
+        Intent intent = new Intent(getActivity(), SurveyActivity.class);
+        intent.putExtra(AppConstant.TEAM_ID, team.getId());
+        intent.putExtra(AppConstant.TEAM_NAME, team.getName());
+        startActivity(intent);
     }
 
     @Override

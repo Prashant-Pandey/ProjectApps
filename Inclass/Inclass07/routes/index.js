@@ -4,8 +4,8 @@ let twilio = require('twilio');
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 
 // TODO: change to environment variables
-const accountSid = 'AC4a5239c473da42818d68b82b9057fc2c';
-const authToken = 'af68a9fbfd3c4876cd65eb727bc8f06e';
+const accountSid = '';
+const authToken = '';
 const client = require('twilio')(accountSid, authToken);
 
   router.use('/recieveSMS', function (req, res, next) {
